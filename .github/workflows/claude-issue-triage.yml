@@ -1,0 +1,62 @@
+name: Claude Issue Triage
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Issue Triage
+        id: claude-triage
+        uses: anthropics/claude-code-action@v1
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          claude_args: |
+            --allowedTools "Bash(gh issue view:*),Bash(gh issue edit:*),Bash(gh issue comment:*),Bash(gh label list:*)"
+
+          prompt: |
+            Analiza el issue #${{ github.event.issue.number }} de este repositorio
+            (Tetris en JavaScript vanilla; toda la lógica del juego vive en `game.js`,
+            ver CLAUDE.md para la arquitectura).
+
+            Pasos:
+            1. Lee el título y cuerpo del issue con `gh issue view ${{ github.event.issue.number }}`.
+            2. Lista los labels disponibles con `gh label list` y elige SOLO entre los
+               labels ya existentes en el repo los que apliquen (por ejemplo: bug,
+               enhancement, question, documentation, duplicate, invalid, wontfix,
+               good first issue, help wanted). No inventes labels nuevos.
+               Aplica los labels elegidos con:
+               `gh issue edit ${{ github.event.issue.number }} --add-label "label1,label2"`
+               Si el issue ya tiene labels que ya no aplican, puedes quitarlos con
+               `gh issue edit ${{ github.event.issue.number }} --remove-label "..."`.
+            3. Publica un único comentario nuevo con
+               `gh issue comment ${{ github.event.issue.number }} --body "..."`
+               que contenga un diagnóstico general en español, estructurado así:
+               - **Resumen del problema**: qué se reporta, en una o dos frases.
+               - **Causa probable**: análisis técnico de por qué ocurre, referenciando
+                 funciones/variables concretas de `game.js` cuando aplique (por ejemplo
+                 `collide`, `tryRotate`, `clearLines`, `spawn`, `loop`, etc.).
+               - **Archivos/áreas afectadas**: qué archivos habría que tocar.
+               - **Enfoque de solución sugerido**: una propuesta de alto nivel para
+                 implementar el fix, sin escribir el código todavía. Este diagnóstico
+                 servirá de base para una implementación posterior.
+               Si el issue no es un bug sino una feature request, pregunta o duda,
+               adapta el diagnóstico a un análisis de viabilidad/enfoque en vez de
+               "causa probable".
+
+            No modifiques el cuerpo ni el título del issue. No hagas commits ni cambios
+            en el código, este workflow es solo de triage y diagnóstico.
