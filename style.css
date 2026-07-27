@@ -108,7 +108,12 @@ body {
   letter-spacing: 1px;
 }
 
-#next-canvas {
+.preview-row {
+  display: flex;
+  gap: 12px;
+}
+
+#next-canvas, #hold-canvas {
   display: block;
   border: 1px solid var(--border);
   background: var(--panel-bg);
