@@ -45,7 +45,11 @@ jobs:
                `gh issue edit ${{ github.event.issue.number }} --remove-label "..."`.
             3. Publica un único comentario nuevo con
                `gh issue comment ${{ github.event.issue.number }} --body "..."`
-               que contenga un diagnóstico general en español, estructurado así:
+               que contenga un diagnóstico general en español. El comentario debe estar
+               escrito en formato Markdown válido que GitHub pueda renderizar
+               correctamente (encabezados con `**negrita**`, listas con `-`, bloques de
+               código con backticks simples para nombres de funciones/variables y
+               backticks triples para fragmentos de código), estructurado así:
                - **Resumen del problema**: qué se reporta, en una o dos frases.
                - **Causa probable**: análisis técnico de por qué ocurre, referenciando
                  funciones/variables concretas de `game.js` cuando aplique (por ejemplo
