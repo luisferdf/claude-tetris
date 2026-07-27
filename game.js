@@ -16,6 +16,42 @@ const COLORS = [
   '#b0bec5', // N - tuerca (gris metálico)
 ];
 
+const NEON_COLORS = [
+  null,
+  '#00fff9', // I - cyan neón
+  '#faff00', // O - amarillo neón
+  '#e100ff', // T - magenta neón
+  '#39ff14', // S - verde neón
+  '#ff2079', // Z - rosa neón
+  '#00aaff', // J - azul neón
+  '#ff9100', // L - naranja neón
+  '#c0c0ff', // N - lila neón
+];
+
+const PASTEL_COLORS = [
+  null,
+  '#a8e6ef', // I
+  '#fff3b0', // O
+  '#e0bbe4', // T
+  '#c1e8c1', // S
+  '#f7c6c7', // Z
+  '#bcd8f2', // J
+  '#ffdcb0', // L
+  '#d8d8e0', // N
+];
+
+const PIXEL_COLORS = [
+  null,
+  '#00b8b0', // I
+  '#e6b800', // O
+  '#9c3fb0', // T
+  '#4a9e4a', // S
+  '#c14444', // Z
+  '#4a90d9', // J
+  '#d97c1f', // L
+  '#7a828c', // N
+];
+
 const PIECES = [
   null,
   [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]], // I
@@ -44,11 +80,15 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 const themeSwitch = document.getElementById('theme-switch');
+const skinSelect = document.getElementById('skin-select');
 
 const THEME_KEY = 'tetris-theme';
+const SKIN_KEY = 'tetris-skin';
 
 let board, current, next, hold, holdUsed, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 let gridLineColor = '#22222e';
+let currentSkin = 'retro';
+let initialized = false;
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
@@ -187,9 +227,9 @@ function updateHUD() {
   levelEl.textContent = level;
 }
 
-function drawBlock(context, x, y, colorIndex, size, alpha) {
+function drawBlockRetro(context, x, y, colorIndex, size, alpha, colors) {
   if (!colorIndex) return;
-  const color = COLORS[colorIndex];
+  const color = colors[colorIndex];
   context.globalAlpha = alpha ?? 1;
   context.fillStyle = color;
   context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
@@ -197,6 +237,76 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
   context.fillStyle = 'rgba(255,255,255,0.12)';
   context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
   context.globalAlpha = 1;
+}
+
+function drawBlockNeon(context, x, y, colorIndex, size, alpha, colors) {
+  if (!colorIndex) return;
+  const color = colors[colorIndex];
+  context.globalAlpha = alpha ?? 1;
+  context.shadowBlur = 14;
+  context.shadowColor = color;
+  context.fillStyle = color;
+  context.fillRect(x * size + 2, y * size + 2, size - 4, size - 4);
+  context.shadowBlur = 0;
+  context.fillStyle = 'rgba(255,255,255,0.25)';
+  context.fillRect(x * size + 2, y * size + 2, size - 4, 3);
+  context.globalAlpha = 1;
+}
+
+function drawBlockPastel(context, x, y, colorIndex, size, alpha, colors) {
+  if (!colorIndex) return;
+  const color = colors[colorIndex];
+  context.globalAlpha = alpha ?? 1;
+  context.fillStyle = color;
+  const px = x * size + 1;
+  const py = y * size + 1;
+  const s = size - 2;
+  const r = Math.min(6, s / 4);
+  if (typeof context.roundRect === 'function') {
+    context.beginPath();
+    context.roundRect(px, py, s, s, r);
+    context.fill();
+  } else {
+    context.fillRect(px, py, s, s);
+  }
+  context.fillStyle = 'rgba(255,255,255,0.35)';
+  context.fillRect(px, py, s, 4);
+  context.globalAlpha = 1;
+}
+
+function drawBlockPixel(context, x, y, colorIndex, size, alpha, colors) {
+  if (!colorIndex) return;
+  const color = colors[colorIndex];
+  context.globalAlpha = alpha ?? 1;
+  context.fillStyle = color;
+  const px = x * size + 1;
+  const py = y * size + 1;
+  const s = size - 2;
+  context.fillRect(px, py, s, s);
+  // textura de pixel art: cuadrícula de píxeles claros/oscuros alternados
+  const cell = Math.max(2, Math.floor(size / 5));
+  for (let oy = 0; oy < s; oy += cell) {
+    for (let ox = 0; ox < s; ox += cell) {
+      const light = ((ox / cell) + (oy / cell)) % 2 === 0;
+      context.fillStyle = light ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)';
+      const w = Math.min(cell, s - ox);
+      const h = Math.min(cell, s - oy);
+      context.fillRect(px + ox, py + oy, w, h);
+    }
+  }
+  context.globalAlpha = 1;
+}
+
+const SKINS = {
+  retro: { colors: COLORS, draw: drawBlockRetro },
+  neon: { colors: NEON_COLORS, draw: drawBlockNeon },
+  pastel: { colors: PASTEL_COLORS, draw: drawBlockPastel },
+  pixel: { colors: PIXEL_COLORS, draw: drawBlockPixel },
+};
+
+function drawBlock(context, x, y, colorIndex, size, alpha) {
+  const skin = SKINS[currentSkin] || SKINS.retro;
+  skin.draw(context, x, y, colorIndex, size, alpha, skin.colors);
 }
 
 function drawGrid() {
@@ -320,6 +430,7 @@ function init() {
   overlay.classList.add('hidden');
   cancelAnimationFrame(animId);
   animId = requestAnimationFrame(loop);
+  initialized = true;
 }
 
 function applyTheme(theme) {
@@ -339,7 +450,29 @@ themeSwitch.addEventListener('change', () => {
   localStorage.setItem(THEME_KEY, theme);
 });
 
+function applySkin(skin) {
+  currentSkin = SKINS[skin] ? skin : 'retro';
+  document.documentElement.setAttribute('data-skin', currentSkin);
+  if (skinSelect) skinSelect.value = currentSkin;
+  if (initialized) {
+    draw();
+    drawNext();
+    drawHold();
+  }
+}
+
+function initSkin() {
+  const saved = localStorage.getItem(SKIN_KEY);
+  applySkin(SKINS[saved] ? saved : 'retro');
+}
+
+skinSelect.addEventListener('change', () => {
+  applySkin(skinSelect.value);
+  localStorage.setItem(SKIN_KEY, currentSkin);
+});
+
 initTheme();
+initSkin();
 
 document.addEventListener('keydown', e => {
   if (e.code === 'KeyP') { togglePause(); return; }

@@ -167,6 +167,32 @@ body {
   transform: translateX(20px);
 }
 
+/* ---- Selector de skin ---- */
+.skin-select-section {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#skin-select {
+  background: var(--kbd-bg);
+  color: var(--text);
+  border: 1px solid var(--kbd-border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* ---- Skin: Neon ---- */
+[data-skin="neon"] #board,
+[data-skin="neon"] #next-canvas,
+[data-skin="neon"] #hold-canvas {
+  background: #000000;
+  box-shadow: 0 0 24px rgba(0, 255, 240, 0.15);
+}
+
 /* ---- Controles ---- */
 .controls ul {
   list-style: none;
