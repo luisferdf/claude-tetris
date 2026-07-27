@@ -248,3 +248,65 @@ kbd {
   background: var(--accent);
   opacity: 0.85;
 }
+
+/* ---- Menú de pausa ---- */
+.pause-box {
+  width: 220px;
+}
+
+#pause-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.menu-btn {
+  width: 100%;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  border-radius: 6px;
+  padding: 10px 28px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.menu-btn:hover {
+  opacity: 0.85;
+}
+
+.menu-btn-secondary {
+  background: var(--kbd-bg);
+  color: var(--text);
+  border: 1px solid var(--kbd-border);
+}
+
+.start-level-section {
+  width: 100%;
+  align-items: center;
+}
+
+#start-level-select {
+  width: 100%;
+  background: var(--kbd-bg);
+  color: var(--text);
+  border: 1px solid var(--kbd-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+#pause-controls {
+  width: 100%;
+  align-items: flex-start;
+}
+
+#pause-controls.hidden {
+  display: none;
+}
